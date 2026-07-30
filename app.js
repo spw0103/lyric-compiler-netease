@@ -5,6 +5,21 @@ const STORAGE_KEY = 'lyric_compiler_netease_songs';
 const LANG_KEY = 'lyric_compiler_lang';
 const YOUTUBE_API_KEY = (function(){try{return atob('QUl6YVN5QXVrVFZtY0MwOWZ5Sm1ZVUJHUk5IQkhkLWxWU2lpdlBj');}catch(e){return '';}})();
 
+const S2T_S = "干了么云从亿仅仆们价众传伤伦伪体余侠侣侥侦侧侨债倾伟儿内两关兴养兽写军农冲决净几凭划刚创别删制则剧剑劲劳势办动务劝区医华协占卢卫卷压参双发变叙叠号叹响吗听启员问啰单严团园国图圆圣场坏块坚坛坝坟声处备复够梦头夹夺奖妆妇妈孙学宁实对寻导尘尝并开异弃张弥当征后忆总爱忧怜愿懒恋战托执扫报拥拦拨择挂挡挥换摄摆摇扰数齐斗于无旧时晓暂畅书术机杀杂权来东松板极构枪标样条杰树桥万种称稳窃穷笔节范简类纷约红纪纯纸纳线组经结绕给络绝统继编缘缠网闻联聪职胡脚脸与叶着盖蓝虚虽补里装见观视觉亲计认记该评询试诗话详诞说请谁课调谈谅谊谢识证谜贝责财费贴贸贺资赛车转轮轻较输过运还这进远连选游达违迟适遗邻里针钟铁铃铭错长门间闲闪闭闹阅阳阴阵陆随隐台壶灯灵灾争为爷牵状独献环现电画疗疯码确离帘细终练绳贵质台刮乱边点让会个没际险雾风飘飞饭饿馆饰马驱驼骄验惊鱼鲜鸟鸡鸣黄龙龟";
+const S2T_T = "幹瞭麼雲從億僅僕們價眾傳傷倫偽體餘俠侶僥偵側僑債傾偉兒內兩關興養獸寫軍農衝決淨幾憑劃剛創別刪製則劇劍勁勞勢辦動務勸區醫華協佔盧衛捲壓參雙發變敘疊號嘆響嗎聽啟員問囉單嚴團園國圖圓聖場壞塊堅壇壩墳聲處備復夠夢頭夾奪獎妝婦媽孫學寧實對尋導塵嘗並開異棄張彌當徵後憶總愛憂憐願懶戀戰託執掃報擁攔撥擇掛擋揮換攝擺搖擾數齊鬥於無舊時曉暫暢書術機殺雜權來東鬆闆極構槍標樣條傑樹橋萬種稱穩竊窮筆節範簡類紛約紅紀純紙納線組經結繞給絡絕統繼編緣纏網聞聯聰職鬍腳臉與葉著蓋藍虛雖補裡裝見觀視覺親計認記該評詢試詩話詳誕說請誰課調談諒誼謝識證謎貝責財費貼貿賀資賽車轉輪輕較輸過運還這進遠連選遊達違遲適遺鄰裏針鐘鐵鈴銘錯長門間閒閃閉鬧閱陽陰陣陸隨隱檯壺燈靈災爭為爺牽狀獨獻環現電畫療瘋碼確離簾細終練繩貴質臺颳亂邊點讓會個沒際險霧風飄飛飯餓館飾馬驅駝驕驗驚魚鮮鳥雞鳴黃龍龜";
+
+function convertText(text) {
+    if (!text) return '';
+    const from = curLang === 'zh_cn' ? S2T_T : S2T_S;
+    const to = curLang === 'zh_cn' ? S2T_S : S2T_T;
+    let out = '';
+    for (const ch of text) {
+        const idx = from.indexOf(ch);
+        out += idx !== -1 ? to[idx] : ch;
+    }
+    return out;
+}
+
 const LANG = {
     zh_tw: {
         appTitle: '歌曲歌詞編譯器', dataSource: '資料來源：網易雲音樂',
@@ -472,7 +487,7 @@ function renderSongs() {
                                 <span class="status-badge ${song.status === 'success' ? 'success' : song.status === 'error' ? 'error' : 'loading'}">${statusLabel}</span>
                             </div>
                             ${song.status === 'success' && song.lyrics ? `<span class="lyrics-toggle" data-toggle-id="${song.id}" onclick="toggleLyrics('${song.id}')">${t('expandLyrics')}</span>` : ''}
-                            <div class="lyrics-content" data-lyrics-id="${song.id}">${escapeHtml(song.lyrics || '')}</div>
+                            <div class="lyrics-content" data-lyrics-id="${song.id}">${escapeHtml(convertText(song.lyrics || ''))}</div>
                             ${listenLink}
                         </div>
                         <div class="song-actions">
@@ -572,7 +587,8 @@ async function generateWord() {
             ]}));
 
             let prevEmpty = true;
-            (song.lyrics || t('noLyrics')).split('\n').forEach(line => {
+            const lyricText = convertText(song.lyrics || t('noLyrics'));
+            lyricText.split('\n').forEach(line => {
                 const raw = line.trim();
                 if (!raw) { prevEmpty = true; return; }
                 const clean = raw.replace(/\[\d{2}:\d{2}(\.\d{2,3})?\]/g, '').trim();
