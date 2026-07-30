@@ -132,7 +132,7 @@ async function fetchSongData(query) {
     const durationMin = durationMs / 60000;
 
     let lyrics = '';
-    let listenUrl = `https://music.163.com/#/song?id=${songId}`;
+    let listenUrl = '';
     let source = 'netease';
 
     try { lyrics = await getLyrics(songId); } catch (_) {}
@@ -147,6 +147,11 @@ async function fetchSongData(query) {
                 source = 'youtube';
             }
         } catch (_) {}
+    }
+
+    if (!listenUrl) {
+        const q = encodeURIComponent(`${title} ${artist}`);
+        listenUrl = `https://www.youtube.com/results?search_query=${q}`;
     }
 
     return { title, artist, lyrics, listenUrl, source };
@@ -340,7 +345,7 @@ function renderSongs() {
         const sourceBadge = song.source === 'youtube' ? '<span style="color:#fff;background:#ff0000;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:8px;">YouTube</span>' : '<span style="color:#fff;background:#d52b1e;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:8px;">網易雲</span>';
 
         const listenLink = song.status === 'success' && song.listenUrl
-            ? `<a href="${song.listenUrl}" target="_blank" class="listen-link">${song.source === 'youtube' ? '▶️ 在 YouTube 上聆聽' : '🎵 在網易雲音樂上聆聽'}</a>` : '';
+            ? `<a href="${song.listenUrl}" target="_blank" class="listen-link">▶️ 在 YouTube 上聆聽</a>` : '';
 
         const lineCount = song.lyrics ? song.lyrics.split('\n').length : 0;
         const showToggle = lineCount > 3;
