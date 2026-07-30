@@ -88,9 +88,7 @@ function t(key, ...args) {
     return typeof val === 'function' ? val(...args) : val;
 }
 
-function toggleLang() {
-    curLang = curLang === 'zh_tw' ? 'zh_cn' : 'zh_tw';
-    localStorage.setItem(LANG_KEY, curLang);
+function applyLang() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.dataset.i18n;
         if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
@@ -99,13 +97,23 @@ function toggleLang() {
             el.textContent = t(key);
         }
     });
+    const sEl = document.getElementById('lang-s');
+    const tEl = document.getElementById('lang-t');
+    if (curLang === 'zh_cn') {
+        sEl.style.fontSize = '18px'; sEl.style.fontWeight = '700';
+        tEl.style.fontSize = '13px'; tEl.style.fontWeight = '400';
+    } else {
+        sEl.style.fontSize = '13px'; sEl.style.fontWeight = '400';
+        tEl.style.fontSize = '18px'; tEl.style.fontWeight = '700';
+    }
     renderSongs();
     updateVisibility();
-    const status = document.getElementById('add-status');
-    if (status.textContent) {
-        const msg = status.textContent;
-        status.textContent = msg;
-    }
+}
+
+function toggleLang() {
+    curLang = curLang === 'zh_tw' ? 'zh_cn' : 'zh_tw';
+    localStorage.setItem(LANG_KEY, curLang);
+    applyLang();
 }
 
 function genId() {
@@ -125,16 +133,8 @@ function saveData() {
 loadData();
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.dataset.i18n;
-        if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
-            el.placeholder = t(key);
-        } else {
-            el.textContent = t(key);
-        }
-    });
-    renderSongs();
-    updateVisibility();
+    applyLang();
+    document.getElementById('lang-toggle').addEventListener('click', toggleLang);
     document.getElementById('song-title').addEventListener('keydown', e => { if (e.key === 'Enter') addSong(); });
     document.getElementById('artist').addEventListener('keydown', e => { if (e.key === 'Enter') addSong(); });
 });
