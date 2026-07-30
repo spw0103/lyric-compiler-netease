@@ -2,134 +2,9 @@ const NETEASE_API = 'https://neteasecloudmusicapi-main-api.vercel.app';
 const YT_SEARCH = 'https://www.googleapis.com/youtube/v3/search';
 const YT_VIDEO = 'https://www.googleapis.com/youtube/v3/videos';
 const STORAGE_KEY = 'lyric_compiler_netease_songs';
-const LANG_KEY = 'lyric_compiler_lang';
 const YOUTUBE_API_KEY = (function(){try{return atob('QUl6YVN5QXVrVFZtY0MwOWZ5Sm1ZVUJHUk5IQkhkLWxWU2lpdlBj');}catch(e){return '';}})();
 
-const S2T_S = "干了么云从亿仅仆们价众传伤伦伪体余侠侣侥侦侧侨债倾伟儿内两关兴养兽写军农冲决净几凭划刚创别删制则剧剑劲劳势办动务劝区医华协占卢卫卷压参双发变叙叠号叹响吗听启员问啰单严团园国图圆圣场坏块坚坛坝坟声处备复够梦头夹夺奖妆妇妈孙学宁实对寻导尘尝并开异弃张弥当征后忆总爱忧怜愿懒恋战托执扫报拥拦拨择挂挡挥换摄摆摇扰数齐斗于无旧时晓暂畅书术机杀杂权来东松板极构枪标样条杰树桥万种称稳窃穷笔节范简类纷约红纪纯纸纳线组经结绕给络绝统继编缘缠网闻联聪职胡脚脸与叶着盖蓝虚虽补里装见观视觉亲计认记该评询试诗话详诞说请谁课调谈谅谊谢识证谜贝责财费贴贸贺资赛车转轮轻较输过运还这进远连选游达违迟适遗邻里针钟铁铃铭错长门间闲闪闭闹阅阳阴阵陆随隐台壶灯灵灾争为爷牵状独献环现电画疗疯码确离帘细终练绳贵质台刮乱边点让会个没际险雾风飘飞饭饿馆饰马驱驼骄验惊鱼鲜鸟鸡鸣黄龙龟";
-const S2T_T = "幹瞭麼雲從億僅僕們價眾傳傷倫偽體餘俠侶僥偵側僑債傾偉兒內兩關興養獸寫軍農衝決淨幾憑劃剛創別刪製則劇劍勁勞勢辦動務勸區醫華協佔盧衛捲壓參雙發變敘疊號嘆響嗎聽啟員問囉單嚴團園國圖圓聖場壞塊堅壇壩墳聲處備復夠夢頭夾奪獎妝婦媽孫學寧實對尋導塵嘗並開異棄張彌當徵後憶總愛憂憐願懶戀戰託執掃報擁攔撥擇掛擋揮換攝擺搖擾數齊鬥於無舊時曉暫暢書術機殺雜權來東鬆闆極構槍標樣條傑樹橋萬種稱穩竊窮筆節範簡類紛約紅紀純紙納線組經結繞給絡絕統繼編緣纏網聞聯聰職鬍腳臉與葉著蓋藍虛雖補裡裝見觀視覺親計認記該評詢試詩話詳誕說請誰課調談諒誼謝識證謎貝責財費貼貿賀資賽車轉輪輕較輸過運還這進遠連選遊達違遲適遺鄰裏針鐘鐵鈴銘錯長門間閒閃閉鬧閱陽陰陣陸隨隱檯壺燈靈災爭為爺牽狀獨獻環現電畫療瘋碼確離簾細終練繩貴質臺颳亂邊點讓會個沒際險霧風飄飛飯餓館飾馬驅駝驕驗驚魚鮮鳥雞鳴黃龍龜";
-
-function convertText(text) {
-    if (!text) return '';
-    const from = curLang === 'zh_cn' ? S2T_T : S2T_S;
-    const to = curLang === 'zh_cn' ? S2T_S : S2T_T;
-    let out = '';
-    for (const ch of text) {
-        const idx = from.indexOf(ch);
-        out += idx !== -1 ? to[idx] : ch;
-    }
-    return out;
-}
-
-const LANG = {
-    zh_tw: {
-        appTitle: '歌曲歌詞編譯器', dataSource: '資料來源：網易雲音樂',
-        subtitle: '搜尋歌曲 → 自動提取歌詞 → 生成可點擊目錄的 Word 文件',
-        addSong: '添加歌曲', songName: '歌曲名稱', artist: '歌手',
-        artistHint: '（選填，留空自動偵測）', add: '添加',
-        batchToggle: '▼ 批量輸入多首歌曲',
-        batchPlaceholder: '每行一首歌，支援格式：\n1. 紅日\n2. 單車 - 李克勤\n3. 小蘋果\n泡沫\n童話 光良',
-        batchFormats: '支援格式：', batchBtn: '批量添加並處理',
-        songList: '歌曲列表', dragHint: '— 拖拽可調整順序',
-        deleteAll: '一鍵刪除', generateBtn: '生成 Word 文件',
-        generateDesc: '將生成包含封面、可點擊目錄、歌詞與聆聽鏈接的 Word 文件',
-        loading: '處理中，請稍候...',
-        searchFail: '搜尋失敗', noSong: '找不到相關歌曲', noLyric: '無法獲取歌詞',
-        noVideo: '找不到相關影片', videoFail: '無法獲取影片詳細資訊', noVideoInfo: '找不到影片資訊',
-        apiKeyMissing: 'YouTube API 金鑰未配置', ytSearchFail: 'YouTube 搜尋失敗',
-        inputName: '請輸入歌曲名稱', dupSong: '此歌曲已存在列表中',
-        searching: (t) => `🎵 正在搜尋「${t}」...`,
-        added: (t) => `✅ 「${t}」已添加完成`,
-        processing: (t) => `⏳ 正在處理「${t}」...`,
-        batchDone: (n) => `✅ ${n} 首歌曲全部處理完成`,
-        batchStart: (n) => `📋 開始批量處理 ${n} 首歌曲...`,
-        inputSongs: '請輸入歌曲', parseFail: '無法解析歌曲，請檢查格式',
-        confirmDelete: '確定要刪除全部歌曲嗎？',
-        coverPrompt: '請輸入封面標題：', coverDefault: '歌曲歌詞合集',
-        noSongs: '請先添加歌曲！', libNotLoaded: '文檔生成庫尚未載入，請檢查網絡連接後刷新頁面。',
-        wordError: '生成 Word 文件時發生錯誤：',
-        neteaseBadge: '網易雲', youtubeBadge: 'YouTube',
-        listenYouTube: '▶️ 在 YouTube 上聆聽', noListen: '（無法取得聆聽連結）',
-        emptyList: '尚未添加歌曲，快來添加第一首歌吧！',
-        done: '✅ 已完成', fail: '❌ 失敗', processing2: '⏳ 處理中',
-        collapse: '▲ 收起', expandLyrics: '▼ 展開歌詞', remove: '✕ 移除',
-        singer: '歌手：', noLyrics: '（無歌詞）',
-        coverTitle: 'Lyrics Collection', songsCount: (n) => `共收錄 ${n} 首歌曲`,
-        toc: '目  錄', listenPrefix: '▶ 聆聽歌曲：',
-        wordTitle: '歌曲歌詞合集',
-    },
-    zh_cn: {
-        appTitle: '歌曲歌词编译器', dataSource: '数据来源：网易云音乐',
-        subtitle: '搜索歌曲 → 自动提取歌词 → 生成可点击目录的 Word 文件',
-        addSong: '添加歌曲', songName: '歌曲名称', artist: '歌手',
-        artistHint: '（选填，留空自动检测）', add: '添加',
-        batchToggle: '▼ 批量输入多首歌曲',
-        batchPlaceholder: '每行一首歌，支持格式：\n1. 红日\n2. 单车 - 李克勤\n3. 小苹果\n泡沫\n童话 光良',
-        batchFormats: '支持格式：', batchBtn: '批量添加并处理',
-        songList: '歌曲列表', dragHint: '— 拖拽可调整顺序',
-        deleteAll: '一键删除', generateBtn: '生成 Word 文件',
-        generateDesc: '将生成包含封面、可点击目录、歌词与聆听链接的 Word 文件',
-        loading: '处理中，请稍候...',
-        searchFail: '搜索失败', noSong: '找不到相关歌曲', noLyric: '无法获取歌词',
-        noVideo: '找不到相关视频', videoFail: '无法获取视频详细信息', noVideoInfo: '找不到视频信息',
-        apiKeyMissing: 'YouTube API 密钥未配置', ytSearchFail: 'YouTube 搜索失败',
-        inputName: '请输入歌曲名称', dupSong: '此歌曲已存在列表中',
-        searching: (t) => `🎵 正在搜索「${t}」...`,
-        added: (t) => `✅ 「${t}」已添加完成`,
-        processing: (t) => `⏳ 正在处理「${t}」...`,
-        batchDone: (n) => `✅ ${n} 首歌曲全部处理完成`,
-        batchStart: (n) => `📋 开始批量处理 ${n} 首歌曲...`,
-        inputSongs: '请输入歌曲', parseFail: '无法解析歌曲，请检查格式',
-        confirmDelete: '确定要删除全部歌曲吗？',
-        coverPrompt: '请输入封面标题：', coverDefault: '歌曲歌词合集',
-        noSongs: '请先添加歌曲！', libNotLoaded: '文档生成库尚未加载，请检查网络连接后刷新页面。',
-        wordError: '生成 Word 文件时发生错误：',
-        neteaseBadge: '网易云', youtubeBadge: 'YouTube',
-        listenYouTube: '▶️ 在 YouTube 上聆听', noListen: '（无法取得聆听链接）',
-        emptyList: '尚未添加歌曲，快来添加第一首歌吧！',
-        done: '✅ 已完成', fail: '❌ 失败', processing2: '⏳ 处理中',
-        collapse: '▲ 收起', expandLyrics: '▼ 展开歌词', remove: '✕ 移除',
-        singer: '歌手：', noLyrics: '（无歌词）',
-        coverTitle: 'Lyrics Collection', songsCount: (n) => `共收录 ${n} 首歌曲`,
-        toc: '目  录', listenPrefix: '▶ 聆听歌曲：',
-        wordTitle: '歌曲歌词合集',
-    }
-};
-
-let curLang = localStorage.getItem(LANG_KEY) || 'zh_tw';
 let songs = [];
-
-function t(key, ...args) {
-    const val = LANG[curLang][key];
-    return typeof val === 'function' ? val(...args) : val;
-}
-
-function applyLang() {
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.dataset.i18n;
-        if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
-            el.placeholder = t(key);
-        } else {
-            el.textContent = t(key);
-        }
-    });
-    const sEl = document.getElementById('lang-s');
-    const tEl = document.getElementById('lang-t');
-    if (curLang === 'zh_cn') {
-        sEl.style.fontSize = '18px'; sEl.style.fontWeight = '700';
-        tEl.style.fontSize = '13px'; tEl.style.fontWeight = '400';
-    } else {
-        sEl.style.fontSize = '13px'; sEl.style.fontWeight = '400';
-        tEl.style.fontSize = '18px'; tEl.style.fontWeight = '700';
-    }
-    renderSongs();
-    updateVisibility();
-}
-
-function toggleLang() {
-    curLang = curLang === 'zh_tw' ? 'zh_cn' : 'zh_tw';
-    localStorage.setItem(LANG_KEY, curLang);
-    applyLang();
-}
 
 function genId() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -148,8 +23,8 @@ function saveData() {
 loadData();
 
 document.addEventListener('DOMContentLoaded', () => {
-    applyLang();
-    document.getElementById('lang-toggle').addEventListener('click', toggleLang);
+    renderSongs();
+    updateVisibility();
     document.getElementById('song-title').addEventListener('keydown', e => { if (e.key === 'Enter') addSong(); });
     document.getElementById('artist').addEventListener('keydown', e => { if (e.key === 'Enter') addSong(); });
 });
@@ -165,23 +40,23 @@ function toggleBatch(toggleEl) {
     const section = document.getElementById('batch-section');
     const isShow = section.style.display !== 'block';
     section.style.display = isShow ? 'block' : 'none';
-    toggleEl.textContent = isShow ? t('collapse') + ' ' + t('batchToggle').replace('▼ ', '') : t('batchToggle');
+    toggleEl.textContent = isShow ? '▲ 收起批量輸入' : '▼ 批量輸入多首歌曲';
 }
 
 // ---- NetEase Cloud Music API ----
 async function searchSongOnNetease(query) {
     const url = `${NETEASE_API}/search?keywords=${encodeURIComponent(query)}&limit=10`;
     const resp = await fetch(url);
-    if (!resp.ok) throw new Error(t('searchFail'));
+    if (!resp.ok) throw new Error('搜尋失敗');
     const data = await resp.json();
-    if (!data.result || !data.result.songs || data.result.songs.length === 0) throw new Error(t('noSong'));
+    if (!data.result || !data.result.songs || data.result.songs.length === 0) throw new Error('找不到相關歌曲');
     return data.result.songs;
 }
 
 async function getLyrics(songId) {
     const url = `${NETEASE_API}/lyric?id=${songId}`;
     const resp = await fetch(url);
-    if (!resp.ok) throw new Error(t('noLyric'));
+    if (!resp.ok) throw new Error('無法獲取歌詞');
     const data = await resp.json();
     return (data.lrc && data.lrc.lyric) || (data.tlyric && data.tlyric.lyric) || '';
 }
@@ -190,9 +65,9 @@ async function getLyrics(songId) {
 async function getVideoDetails(videoId) {
     const url = `${YT_VIDEO}?part=snippet,contentDetails&id=${videoId}&key=${YOUTUBE_API_KEY}`;
     const resp = await fetch(url);
-    if (!resp.ok) throw new Error(t('videoFail'));
+    if (!resp.ok) throw new Error('無法獲取影片詳細資訊');
     const data = await resp.json();
-    if (!data.items || data.items.length === 0) throw new Error(t('noVideoInfo'));
+    if (!data.items || data.items.length === 0) throw new Error('找不到影片資訊');
     return data.items[0];
 }
 
@@ -218,12 +93,12 @@ function scoreVideo(snippet, contentDetails) {
 }
 
 async function searchSongOnYouTube(query) {
-    if (!YOUTUBE_API_KEY) throw new Error(t('apiKeyMissing'));
+    if (!YOUTUBE_API_KEY) throw new Error('YouTube API 金鑰未配置');
     const url = `${YT_SEARCH}?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=10&key=${YOUTUBE_API_KEY}`;
     const resp = await fetch(url);
-    if (!resp.ok) throw new Error(t('ytSearchFail'));
+    if (!resp.ok) throw new Error('YouTube 搜尋失敗');
     const data = await resp.json();
-    if (!data.items || data.items.length === 0) throw new Error(t('noVideo'));
+    if (!data.items || data.items.length === 0) throw new Error('找不到相關影片');
 
     let best = data.items[0], bestScore = -999;
     for (const item of data.items) {
@@ -249,7 +124,7 @@ async function searchSongOnYouTube(query) {
 // ---- Hybrid fetch: NetEase first, YouTube fallback ----
 async function fetchSongData(query) {
     const songsList = await searchSongOnNetease(query);
-    const best = songsList[0];
+    const best = songsList.find(s => !/\(RAP版\)|\(R&B版\)|\(Rap版\)|\(Live版\)|\(Live\)|\(Remix\)|\(Instrumental\)/i.test(s.name)) || songsList[0];
     const songId = best.id;
     const title = best.name;
     const artist = best.artists ? best.artists.map(a => a.name).join(', ') : (best.ar ? best.ar.map(a => a.name).join(', ') : '');
@@ -287,27 +162,27 @@ async function addSong() {
     const artistInput = document.getElementById('artist');
     const title = titleInput.value.trim();
     const artist = artistInput.value.trim();
-    if (!title) { setStatus(t('inputName'), 'error'); return; }
+    if (!title) { setStatus('請輸入歌曲名稱', 'error'); return; }
 
     const query = artist ? `${artist} ${title}` : title;
     const dup = songs.find(s => s.title.toLowerCase() === title.toLowerCase() && (!artist || s.artist.toLowerCase() === artist.toLowerCase()));
-    if (dup) { setStatus(t('dupSong'), 'error'); return; }
+    if (dup) { setStatus('此歌曲已存在列表中', 'error'); return; }
 
     const song = {
-        id: genId(), title, artist: artist || t('searching', '') || '搜尋中...',
+        id: genId(), title, artist: artist || '搜尋中...',
         lyrics: '', listenUrl: '', status: 'loading', source: '',
     };
     songs.push(song);
     commitAndRender();
     titleInput.value = ''; artistInput.value = ''; titleInput.focus();
-    setStatus(t('searching', title), 'loading');
+    setStatus(`🎵 正在搜尋「${title}」...`, 'loading');
 
     try {
         const r = await fetchSongData(query);
         const s = songs.find(x => x.id === song.id);
         if (s) { s.title = r.title; s.artist = r.artist; s.lyrics = r.lyrics; s.listenUrl = r.listenUrl; s.source = r.source; s.status = 'success'; }
         commitAndRender();
-        setStatus(t('added', title), 'success');
+        setStatus(`✅ 「${title}」已添加完成`, 'success');
     } catch (err) {
         const s = songs.find(x => x.id === song.id);
         if (s) { s.status = 'error'; s.lyrics = `（${err.message}）`; }
@@ -318,8 +193,9 @@ async function addSong() {
 
 // ---- Batch input ----
 function parseBatchInput(text) {
+    const invisible = /[\u200B-\u200F\u2028-\u202F\u2060-\u2069\ufeff]/g;
     return text.split('\n').map(l => l.trim()).filter(l => l).map(line => {
-        let cleaned = line.replace(/^\d+[\.\、\s\)]*\s*/, '');
+        let cleaned = line.replace(/^\d+[\.\、\s\)]*\s*/, '').replace(invisible, '');
         const sep = cleaned.match(/^(.+?)\s*[-–—]\s*(.+)$/);
         if (sep) return { title: sep[2].trim(), artist: sep[1].trim() };
         return { title: cleaned, artist: '' };
@@ -329,10 +205,10 @@ function parseBatchInput(text) {
 async function addBatchSongs() {
     const textarea = document.getElementById('batch-input');
     const text = textarea.value.trim();
-    if (!text) { setStatus(t('inputSongs'), 'error'); return; }
+    if (!text) { setStatus('請輸入歌曲', 'error'); return; }
 
     const parsed = parseBatchInput(text);
-    if (parsed.length === 0) { setStatus(t('parseFail'), 'error'); return; }
+    if (parsed.length === 0) { setStatus('無法解析歌曲，請檢查格式', 'error'); return; }
 
     const newSongs = parsed.map(p => ({
         id: genId(), title: p.title, artist: p.artist || '搜尋中...',
@@ -347,7 +223,7 @@ async function addBatchSongs() {
         const s = songs.find(x => x.id === ns.id);
         if (!s) continue;
         const query = (s.artist && s.artist !== '搜尋中...') ? `${s.artist} ${s.title}` : s.title;
-        setStatus(t('processing', s.title), 'loading');
+        setStatus(`⏳ 正在處理「${s.title}」...`, 'loading');
         try {
             const r = await fetchSongData(query);
             s.title = r.title; s.artist = r.artist; s.lyrics = r.lyrics;
@@ -357,7 +233,7 @@ async function addBatchSongs() {
         }
         commitAndRender();
     }
-    setStatus(t('batchDone', newSongs.length), 'success');
+    setStatus(`✅ ${newSongs.length} 首歌曲全部處理完成`, 'success');
 }
 
 function commitAndRender() {
@@ -438,17 +314,17 @@ function updateNumbers() {
 
 function deleteAllSongs() {
     if (songs.length === 0) return;
-    if (!confirm(t('confirmDelete'))) return;
+    if (!confirm('確定要刪除全部歌曲嗎？')) return;
     songs = [];
     commitAndRender();
 }
 
 function toggleLyrics(id) {
     const c = document.querySelector(`[data-lyrics-id="${id}"]`);
-    const t2 = document.querySelector(`[data-toggle-id="${id}"]`);
+    const t = document.querySelector(`[data-toggle-id="${id}"]`);
     if (!c) return;
     const show = c.classList.toggle('show');
-    if (t2) t2.textContent = show ? t('collapse') : t('expandLyrics');
+    if (t) t.textContent = show ? '▲ 收起' : '▼ 展開歌詞';
 }
 
 // ---- Render ----
@@ -458,20 +334,20 @@ function renderSongs() {
     count.textContent = songs.length;
 
     if (songs.length === 0) {
-        list.innerHTML = `<p style="color:#999;text-align:center;padding:20px;">${t('emptyList')}</p>`;
+        list.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">尚未添加歌曲，快來添加第一首歌吧！</p>';
         return;
     }
 
     list.innerHTML = songs.map((song, i) => {
-        const statusLabel = song.status === 'success' ? t('done') :
-                           song.status === 'error' ? t('fail') : t('processing2');
+        const statusLabel = song.status === 'success' ? '✅ 已完成' :
+                           song.status === 'error' ? '❌ 失敗' : '⏳ 處理中';
 
-        const badgeText = song.source === 'youtube' ? t('youtubeBadge') : t('neteaseBadge');
+        const badgeText = song.source === 'youtube' ? 'YouTube' : '網易雲';
         const badgeColor = song.source === 'youtube' ? '#ff0000' : '#d52b1e';
         const sourceBadge = `<span style="color:#fff;background:${badgeColor};padding:2px 8px;border-radius:10px;font-size:11px;margin-left:8px;">${badgeText}</span>`;
 
         const listenLink = song.status === 'success' && song.listenUrl
-            ? `<a href="${song.listenUrl}" target="_blank" class="listen-link">${t('listenYouTube')}</a>` : '';
+            ? `<a href="${song.listenUrl}" target="_blank" class="listen-link">▶️ 在 YouTube 上聆聽</a>` : '';
 
         const lineCount = song.lyrics ? song.lyrics.split('\n').length : 0;
 
@@ -486,12 +362,12 @@ function renderSongs() {
                             <div class="song-status">
                                 <span class="status-badge ${song.status === 'success' ? 'success' : song.status === 'error' ? 'error' : 'loading'}">${statusLabel}</span>
                             </div>
-                            ${song.status === 'success' && song.lyrics ? `<span class="lyrics-toggle" data-toggle-id="${song.id}" onclick="toggleLyrics('${song.id}')">${t('expandLyrics')}</span>` : ''}
-                            <div class="lyrics-content" data-lyrics-id="${song.id}">${escapeHtml(convertText(song.lyrics || ''))}</div>
+                            ${song.status === 'success' && song.lyrics ? `<span class="lyrics-toggle" data-toggle-id="${song.id}" onclick="toggleLyrics('${song.id}')">▼ 展開歌詞</span>` : ''}
+                            <div class="lyrics-content" data-lyrics-id="${song.id}">${escapeHtml(song.lyrics || '')}</div>
                             ${listenLink}
                         </div>
                         <div class="song-actions">
-                            <button class="btn btn-danger btn-small" onclick="removeSong('${song.id}')">${t('remove')}</button>
+                            <button class="btn btn-danger btn-small" onclick="removeSong('${song.id}')">✕ 移除</button>
                         </div>
                     </div>
                 </div>
@@ -524,12 +400,12 @@ function escapeHtml(t) {
 
 // ---- Word generation ----
 async function generateWord() {
-    if (songs.length === 0) { alert(t('noSongs')); return; }
-    if (!window.docx || !window.saveAs) { alert(t('libNotLoaded')); return; }
+    if (songs.length === 0) { alert('請先添加歌曲！'); return; }
+    if (!window.docx || !window.saveAs) { alert('文檔生成庫尚未載入，請檢查網絡連接後刷新頁面。'); return; }
 
-    const coverName = prompt(t('coverPrompt'), t('coverDefault'));
+    const coverName = prompt('請輸入封面標題：', '歌曲歌詞合集');
     if (coverName === null) return;
-    const title = coverName.trim() || t('coverDefault');
+    const title = coverName.trim() || '歌曲歌詞合集';
 
     document.getElementById('loading-overlay').style.display = 'flex';
 
@@ -554,12 +430,12 @@ async function generateWord() {
             new TextRun({ text: 'Lyrics Collection', size: 28, color: '888888', italics: true }),
         ]}));
         children.push(new Paragraph({ spacing: { before: 1000 }, alignment: AlignmentType.CENTER, children: [
-            new TextRun({ text: t('songsCount', songs.length), size: 24, color: '666666' }),
+            new TextRun({ text: `共收錄 ${songs.length} 首歌曲`, size: 24, color: '666666' }),
         ]}));
 
         children.push(new Paragraph({ children: [new PageBreak()] }));
         children.push(new Paragraph({ spacing: { after: 400 }, alignment: AlignmentType.CENTER, children: [
-            new TextRun({ text: t('toc'), bold: true, size: 36, color: '333333' }),
+            new TextRun({ text: '目  錄', bold: true, size: 36, color: '333333' }),
         ]}));
 
         songs.forEach((song, i) => {
@@ -583,12 +459,11 @@ async function generateWord() {
                 new Bookmark({ id: `song-${i}`, children: [new TextRun({ text: `${i + 1}. ${song.title}`, bold: true, size: 36, color: '1a1a2e' })] }),
             ]}));
             children.push(new Paragraph({ spacing: { after: 300 }, children: [
-                new TextRun({ text: `${t('singer')}${song.artist}`, size: 24, color: '555555' }),
+                new TextRun({ text: `歌手：${song.artist}`, size: 24, color: '555555' }),
             ]}));
 
             let prevEmpty = true;
-            const lyricText = convertText(song.lyrics || t('noLyrics'));
-            lyricText.split('\n').forEach(line => {
+            (song.lyrics || '（無歌詞）').split('\n').forEach(line => {
                 const raw = line.trim();
                 if (!raw) { prevEmpty = true; return; }
                 const clean = raw.replace(/\[\d{2}:\d{2}(\.\d{2,3})?\]/g, '').trim();
@@ -602,7 +477,7 @@ async function generateWord() {
 
             if (song.listenUrl) {
                 children.push(new Paragraph({ spacing: { before: 500 }, children: [
-                    new TextRun({ text: t('listenPrefix'), size: 22, color: '666666', bold: true }),
+                    new TextRun({ text: '▶ 聆聽歌曲：', size: 22, color: '666666', bold: true }),
                     new ExternalHyperlink({
                         children: [new TextRun({ text: song.listenUrl, size: 20, color: '1a73e8', underline: { type: UnderlineType.SINGLE } })],
                         link: song.listenUrl,
@@ -610,14 +485,14 @@ async function generateWord() {
                 ]}));
             } else {
                 children.push(new Paragraph({ spacing: { before: 500 }, children: [
-                    new TextRun({ text: t('noListen'), size: 20, color: 'aaaaaa', italics: true }),
+                    new TextRun({ text: '（無法取得聆聽連結）', size: 20, color: 'aaaaaa', italics: true }),
                 ]}));
             }
         });
 
         const blob = await Packer.toBlob(new Document({
             title: title,
-            description: t('songsCount', songs.length),
+            description: `共收錄 ${songs.length} 首歌曲`,
             creator: '歌曲歌詞編譯器 - 網易雲版',
             styles: { default: { document: { run: { font: 'Microsoft JhengHei', size: 22 }, paragraph: { spacing: { after: 120 } } } } },
             sections: [{ children }],
@@ -626,7 +501,7 @@ async function generateWord() {
 
     } catch (err) {
         console.error(err);
-        alert(t('wordError') + err.message);
+        alert('生成 Word 文件時發生錯誤：' + err.message);
     } finally {
         document.getElementById('loading-overlay').style.display = 'none';
     }
