@@ -78,7 +78,7 @@ function parseDuration(iso) {
 }
 
 function hasLyricIndicators(text) {
-    return /作詞|作曲|作词|詞：|曲：|Lyrics|lyrics|歌詞|歌词/.test(text);
+    return /作[詞词]|[詞词][：:]|作曲|曲[：:]|[Ll]yrics|歌[詞词]/.test(text);
 }
 
 function descriptionOk(desc, durationMin) {
@@ -150,7 +150,7 @@ async function fetchSongData(query) {
     }
 
     if (!listenUrl) {
-        listenUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} ${artist}`)}`;
+        listenUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(title)}`;
     }
 
     return { title, artist, lyrics, listenUrl, source };
