@@ -121,19 +121,6 @@ async function searchSongOnYouTube(query) {
     };
 }
 
-async function searchYouTubeUrl(query) {
-    if (!YOUTUBE_API_KEY) return '';
-    const url = `${YT_SEARCH}?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=1&key=${YOUTUBE_API_KEY}`;
-    try {
-        const resp = await fetch(url);
-        const data = await resp.json();
-        if (data.items && data.items.length > 0 && data.items[0].id.videoId) {
-            return `https://www.youtube.com/watch?v=${data.items[0].id.videoId}`;
-        }
-    } catch (_) {}
-    return '';
-}
-
 // ---- Hybrid fetch: NetEase first, YouTube fallback ----
 async function fetchSongData(query) {
     const songsList = await searchSongOnNetease(query);
@@ -163,7 +150,7 @@ async function fetchSongData(query) {
     }
 
     if (!listenUrl) {
-        listenUrl = await searchYouTubeUrl(`${title} ${artist}`);
+        listenUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} ${artist}`)}`;
     }
 
     return { title, artist, lyrics, listenUrl, source };
