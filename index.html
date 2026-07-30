@@ -13,39 +13,42 @@
 
     <div class="header">
         <div class="header-icon">♪</div>
-        <h1>歌曲歌詞編譯器</h1>
-        <p style="font-size:13px;opacity:0.7;">資料來源：網易雲音樂</p>
-        <p>搜尋歌曲 → 自動提取歌詞 → 生成可點擊目錄的 Word 文件</p>
+        <div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;">
+            <h1 style="margin:0;" data-i18n="appTitle">歌曲歌詞編譯器</h1>
+            <button id="lang-toggle" onclick="toggleLang()" style="background:#f0f0f0;border:1px solid #ddd;border-radius:20px;padding:4px 14px;font-size:13px;cursor:pointer;color:#555;">繁/简</button>
+        </div>
+        <p style="font-size:13px;opacity:0.7;" data-i18n="dataSource">資料來源：網易雲音樂</p>
+        <p data-i18n="subtitle">搜尋歌曲 → 自動提取歌詞 → 生成可點擊目錄的 Word 文件</p>
     </div>
 
     <div class="container">
 
         <div class="card">
             <div class="card-header">
-                <span>🎤 添加歌曲</span>
+                <span>🎤 <span data-i18n="addSong">添加歌曲</span></span>
             </div>
             <div class="card-body">
                 <div class="input-row">
                     <div style="flex:1;">
-                        <label for="song-title">歌曲名稱</label>
+                        <label for="song-title" data-i18n="songName">歌曲名稱</label>
                         <input type="text" id="song-title" placeholder="例如：告白氣球">
                     </div>
                     <div style="flex:1;">
-                        <label for="artist">歌手 <span style="color:#888;font-weight:400;">（選填，留空自動偵測）</span></label>
+                        <label for="artist"><span data-i18n="artist">歌手</span> <span style="color:#888;font-weight:400;" data-i18n="artistHint">（選填，留空自動偵測）</span></label>
                         <input type="text" id="artist" placeholder="例如：周杰倫">
                     </div>
                     <div style="display:flex;align-items:flex-end;">
-                        <button class="btn btn-primary" onclick="addSong()">➕ 添加</button>
+                        <button class="btn btn-primary" onclick="addSong()">➕ <span data-i18n="add">添加</span></button>
                     </div>
                 </div>
                 <div id="add-status" style="margin-top:8px;font-size:14px;"></div>
 
                 <div style="margin-top:16px;padding-top:16px;border-top:1px solid #eee;">
-                    <span class="lyrics-toggle" onclick="toggleBatch(this)" style="font-size:14px;">▼ 批量輸入多首歌曲</span>
+                    <span class="lyrics-toggle" onclick="toggleBatch(this)" style="font-size:14px;" data-i18n="batchToggle">▼ 批量輸入多首歌曲</span>
                     <div id="batch-section" style="display:none;margin-top:10px;">
-                        <textarea id="batch-input" rows="5" placeholder="每行一首歌，支援格式：&#10;1. 紅日&#10;2. 單車 - 李克勤&#10;3. 小蘋果&#10;泡沫&#10;童話 光良" style="width:100%;padding:12px;background:#f8f9fa;border:1px solid #ddd;border-radius:10px;color:#333;font-size:15px;resize:vertical;outline:none;font-family:inherit;"></textarea>
-                        <div class="helper-text">支援格式：<code>歌名</code> <code>1. 歌名</code> <code>歌名 - 歌手</code></div>
-                        <button class="btn btn-secondary" onclick="addBatchSongs()" style="margin-top:10px;">📋 批量添加並處理</button>
+                        <textarea id="batch-input" rows="5" data-i18n="batchPlaceholder" placeholder="每行一首歌，支援格式：&#10;1. 紅日&#10;2. 單車 - 李克勤&#10;3. 小蘋果&#10;泡沫&#10;童話 光良" style="width:100%;padding:12px;background:#f8f9fa;border:1px solid #ddd;border-radius:10px;color:#333;font-size:15px;resize:vertical;outline:none;font-family:inherit;"></textarea>
+                        <div class="helper-text" data-i18n="batchFormats">支援格式：<code>歌名</code> <code>1. 歌名</code> <code>歌名 - 歌手</code></div>
+                        <button class="btn btn-secondary" onclick="addBatchSongs()" style="margin-top:10px;">📋 <span data-i18n="batchBtn">批量添加並處理</span></button>
                     </div>
                 </div>
             </div>
@@ -53,8 +56,8 @@
 
         <div class="card" id="songs-card" style="display:none;">
             <div class="card-header">
-                <span>📋 歌曲列表 (<span id="song-count">0</span>) <span style="color:#888;font-weight:400;font-size:13px;">— 拖拽可調整順序</span></span>
-                <button class="btn btn-danger btn-small" onclick="deleteAllSongs()" id="delete-all-btn" style="display:none;">🗑 一鍵刪除</button>
+                <span>📋 <span data-i18n="songList">歌曲列表</span> (<span id="song-count">0</span>) <span style="color:#888;font-weight:400;font-size:13px;" data-i18n="dragHint">— 拖拽可調整順序</span></span>
+                <button class="btn btn-danger btn-small" onclick="deleteAllSongs()" id="delete-all-btn" style="display:none;">🗑 <span data-i18n="deleteAll">一鍵刪除</span></button>
             </div>
             <div class="card-body" id="songs-list"></div>
         </div>
@@ -62,9 +65,9 @@
         <div class="card" id="generate-card" style="display:none;">
             <div class="card-body" style="text-align:center;">
                 <button class="btn btn-accent" onclick="generateWord()" style="font-size:18px;padding:16px 48px;">
-                    📄 生成 Word 文件
+                    📄 <span data-i18n="generateBtn">生成 Word 文件</span>
                 </button>
-                <p style="color:#999;font-size:13px;margin-top:10px;">
+                <p style="color:#999;font-size:13px;margin-top:10px;" data-i18n="generateDesc">
                     將生成包含封面、可點擊目錄、歌詞與聆聽鏈接的 Word 文件
                 </p>
             </div>
@@ -72,17 +75,17 @@
 
         <div id="loading-overlay" style="display:none;">
             <div class="spinner"></div>
-            <p>處理中，請稍候...</p>
+            <p data-i18n="loading">處理中，請稍候...</p>
         </div>
 
     </div>
 
     <div class="footer">
-        <p>歌曲歌詞編譯器 &copy; 2026 &nbsp;|&nbsp; 資料來源：網易雲音樂</p>
+        <p>歌曲歌詞編譯器 &copy; 2026 &nbsp;|&nbsp; <span data-i18n="dataSource">資料來源：網易雲音樂</span></p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-    <script src="app.js?v=2"></script>
+    <script src="app.js?v=3"></script>
 </body>
 </html>
