@@ -1,4 +1,4 @@
-const NETEASE_API = 'https://neteasecloudmusicapi.vercel.app';
+const NETEASE_API = 'https://neteasecloudmusicapi-main-api.vercel.app';
 const STORAGE_KEY = 'lyric_compiler_netease_songs';
 
 let songs = [];
