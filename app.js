@@ -180,9 +180,9 @@ async function addSong() {
     try {
         const r = await fetchSongData(query);
         const s = songs.find(x => x.id === song.id);
-        if (s) { s.title = r.title; s.artist = r.artist; s.lyrics = r.lyrics; s.listenUrl = r.listenUrl; s.source = r.source; s.status = 'success'; }
+        if (s) { s.artist = r.artist; s.lyrics = r.lyrics; s.listenUrl = r.listenUrl; s.source = r.source; s.status = 'success'; }
         commitAndRender();
-        setStatus(`✅ 「${title}」已添加完成`, 'success');
+        setStatus(`✅ 「${s ? s.title : title}」已添加完成`, 'success');
     } catch (err) {
         const s = songs.find(x => x.id === song.id);
         if (s) { s.status = 'error'; s.lyrics = `（${err.message}）`; }
@@ -226,7 +226,7 @@ async function addBatchSongs() {
         setStatus(`⏳ 正在處理「${s.title}」...`, 'loading');
         try {
             const r = await fetchSongData(query);
-            s.title = r.title; s.artist = r.artist; s.lyrics = r.lyrics;
+            s.artist = r.artist; s.lyrics = r.lyrics;
             s.listenUrl = r.listenUrl; s.source = r.source; s.status = 'success';
         } catch (err) {
             s.status = 'error'; s.lyrics = `（${err.message}）`;
@@ -493,7 +493,7 @@ async function generateWord() {
         const blob = await Packer.toBlob(new Document({
             title: title,
             description: `共收錄 ${songs.length} 首歌曲`,
-            creator: '歌曲歌詞編譯器 - 網易雲版',
+            creator: '歌曲歌詞編譯器',
             styles: { default: { document: { run: { font: 'Microsoft JhengHei', size: 22 }, paragraph: { spacing: { after: 120 } } } } },
             sections: [{ children }],
         }));
