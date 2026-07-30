@@ -1,5 +1,8 @@
 const NETEASE_API = 'https://neteasecloudmusicapi-main-api.vercel.app';
+const YT_SEARCH = 'https://www.googleapis.com/youtube/v3/search';
+const YT_VIDEO = 'https://www.googleapis.com/youtube/v3/videos';
 const STORAGE_KEY = 'lyric_compiler_netease_songs';
+const YOUTUBE_API_KEY = (function(){try{return atob('QUl6YVN5QXVrVFZtY0MwOWZ5Sm1ZVUJHUk5IQkhkLWxWU2lpdlBj');}catch(e){return '';}})();
 
 let songs = [];
 
@@ -13,7 +16,7 @@ function loadData() {
 function saveData() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(songs.map(s => ({
         id: s.id, title: s.title, artist: s.artist,
-        lyrics: s.lyrics, listenUrl: s.listenUrl, status: s.status
+        lyrics: s.lyrics, listenUrl: s.listenUrl, status: s.status, source: s.source
     }))));
 }
 
@@ -58,22 +61,95 @@ async function getLyrics(songId) {
     return (data.lrc && data.lrc.lyric) || (data.tlyric && data.tlyric.lyric) || '';
 }
 
+// ---- YouTube API (fallback) ----
+async function getVideoDetails(videoId) {
+    const url = `${YT_VIDEO}?part=snippet,contentDetails&id=${videoId}&key=${YOUTUBE_API_KEY}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('無法獲取影片詳細資訊');
+    const data = await resp.json();
+    if (!data.items || data.items.length === 0) throw new Error('找不到影片資訊');
+    return data.items[0];
+}
+
+function parseDuration(iso) {
+    const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    const h = parseInt(m[1] || '0'), min = parseInt(m[2] || '0'), s = parseInt(m[3] || '0');
+    return h * 60 + min + s / 60;
+}
+
+function hasLyricIndicators(text) {
+    return /作詞|作曲|作词|詞：|曲：|Lyrics|lyrics|歌詞|歌词/.test(text);
+}
+
+function descriptionOk(desc, durationMin) {
+    return (desc || '').length >= Math.max(80, Math.round(durationMin * 100));
+}
+
+function scoreVideo(snippet, contentDetails) {
+    const dur = contentDetails ? parseDuration(contentDetails.duration) : 3;
+    const desc = (snippet.description || '');
+    const linkCount = (desc.match(/https?:\/\//g) || []).length;
+    return (descriptionOk(desc, dur) ? 2 : 0) + (hasLyricIndicators(desc) ? 1 : 0) + (linkCount > 2 ? -2 : 0);
+}
+
+async function searchSongOnYouTube(query) {
+    if (!YOUTUBE_API_KEY) throw new Error('YouTube API 金鑰未配置');
+    const url = `${YT_SEARCH}?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=10&key=${YOUTUBE_API_KEY}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('YouTube 搜尋失敗');
+    const data = await resp.json();
+    if (!data.items || data.items.length === 0) throw new Error('找不到相關影片');
+
+    let best = data.items[0], bestScore = -999;
+    for (const item of data.items) {
+        if (!item.id.videoId) continue;
+        const score = scoreVideo(item.snippet, null);
+        if (score > bestScore) { bestScore = score; best = item; }
+    }
+
+    let snippet = best.snippet;
+    try {
+        const detail = await getVideoDetails(best.id.videoId);
+        snippet = detail.snippet;
+    } catch (_) {}
+
+    return {
+        title: snippet.title || query,
+        artist: snippet.channelTitle || '',
+        lyrics: snippet.description || '',
+        youtubeUrl: `https://www.youtube.com/watch?v=${best.id.videoId}`,
+    };
+}
+
+// ---- Hybrid fetch: NetEase first, YouTube fallback ----
 async function fetchSongData(query) {
     const songsList = await searchSongOnNetease(query);
     const best = songsList[0];
     const songId = best.id;
     const title = best.name;
     const artist = best.artists ? best.artists.map(a => a.name).join(', ') : (best.ar ? best.ar.map(a => a.name).join(', ') : '');
+    const durationMs = best.duration || 0;
+    const durationMin = durationMs / 60000;
 
     let lyrics = '';
+    let listenUrl = `https://music.163.com/#/song?id=${songId}`;
+    let source = 'netease';
+
     try { lyrics = await getLyrics(songId); } catch (_) {}
 
-    return {
-        title,
-        artist,
-        lyrics,
-        listenUrl: `https://music.163.com/#/song?id=${songId}`,
-    };
+    const clean = (lyrics || '').replace(/\[\d{2}:\d{2}(\.\d{2,3})?\]/g, '').trim();
+    if (!descriptionOk(clean, durationMin)) {
+        try {
+            const yt = await searchSongOnYouTube(query);
+            if (yt.lyrics && yt.lyrics.length > 0) {
+                lyrics = yt.lyrics;
+                listenUrl = yt.youtubeUrl;
+                source = 'youtube';
+            }
+        } catch (_) {}
+    }
+
+    return { title, artist, lyrics, listenUrl, source };
 }
 
 // ---- Single song ----
@@ -90,7 +166,7 @@ async function addSong() {
 
     const song = {
         id: genId(), title, artist: artist || '搜尋中...',
-        lyrics: '', listenUrl: '', status: 'loading',
+        lyrics: '', listenUrl: '', status: 'loading', source: '',
     };
     songs.push(song);
     commitAndRender();
@@ -100,7 +176,7 @@ async function addSong() {
     try {
         const r = await fetchSongData(query);
         const s = songs.find(x => x.id === song.id);
-        if (s) { s.title = r.title; s.artist = r.artist; s.lyrics = r.lyrics; s.listenUrl = r.listenUrl; s.status = 'success'; }
+        if (s) { s.title = r.title; s.artist = r.artist; s.lyrics = r.lyrics; s.listenUrl = r.listenUrl; s.source = r.source; s.status = 'success'; }
         commitAndRender();
         setStatus(`✅ 「${title}」已添加完成`, 'success');
     } catch (err) {
@@ -131,7 +207,7 @@ async function addBatchSongs() {
 
     const newSongs = parsed.map(p => ({
         id: genId(), title: p.title, artist: p.artist || '搜尋中...',
-        lyrics: '', listenUrl: '', status: 'loading',
+        lyrics: '', listenUrl: '', status: 'loading', source: '',
     }));
 
     songs.push(...newSongs);
@@ -146,7 +222,7 @@ async function addBatchSongs() {
         try {
             const r = await fetchSongData(query);
             s.title = r.title; s.artist = r.artist; s.lyrics = r.lyrics;
-            s.listenUrl = r.listenUrl; s.status = 'success';
+            s.listenUrl = r.listenUrl; s.source = r.source; s.status = 'success';
         } catch (err) {
             s.status = 'error'; s.lyrics = `（${err.message}）`;
         }
@@ -261,8 +337,10 @@ function renderSongs() {
         const statusLabel = song.status === 'success' ? '✅ 已完成' :
                            song.status === 'error' ? '❌ 失敗' : '⏳ 處理中';
 
+        const sourceBadge = song.source === 'youtube' ? '<span style="color:#fff;background:#ff0000;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:8px;">YouTube</span>' : '<span style="color:#fff;background:#d52b1e;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:8px;">網易雲</span>';
+
         const listenLink = song.status === 'success' && song.listenUrl
-            ? `<a href="${song.listenUrl}" target="_blank" class="listen-link">🎵 在網易雲音樂上聆聽</a>` : '';
+            ? `<a href="${song.listenUrl}" target="_blank" class="listen-link">${song.source === 'youtube' ? '▶️ 在 YouTube 上聆聽' : '🎵 在網易雲音樂上聆聽'}</a>` : '';
 
         const lineCount = song.lyrics ? song.lyrics.split('\n').length : 0;
         const showToggle = lineCount > 3;
@@ -274,7 +352,7 @@ function renderSongs() {
                     <div class="song-header">
                         <div class="song-info">
                             <div class="song-title">${i + 1}. ${escapeHtml(song.title)}</div>
-                            <div class="song-artist">${escapeHtml(song.artist)}</div>
+                            <div class="song-artist">${escapeHtml(song.artist)}${song.status === 'success' ? sourceBadge : ''}</div>
                             <div class="song-status">
                                 <span class="status-badge ${song.status === 'success' ? 'success' : song.status === 'error' ? 'error' : 'loading'}">${statusLabel}</span>
                             </div>
