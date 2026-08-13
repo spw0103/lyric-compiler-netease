@@ -403,6 +403,21 @@ function escapeHtml(t) {
 }
 
 // ---- Word generation ----
+let cnConverter = null;
+let twConverter = null;
+
+function getConverter(lang) {
+    try {
+        if (!window.OpenCC) return null;
+        if (lang === 'zh_cn') {
+            if (!cnConverter) cnConverter = OpenCC.Converter({ from: 'tw', to: 'cn' });
+            return cnConverter;
+        }
+        if (!twConverter) twConverter = OpenCC.Converter({ from: 'cn', to: 'tw' });
+        return twConverter;
+    } catch (_) { return null; }
+}
+
 async function generateWord() {
     if (songs.length === 0) { alert('請先添加歌曲！'); return; }
     if (!window.docx || !window.saveAs) { alert('文檔生成庫尚未載入，請檢查網絡連接後刷新頁面。'); return; }
@@ -410,6 +425,11 @@ async function generateWord() {
     const coverName = prompt('請輸入封面標題：', '歌曲歌詞合集');
     if (coverName === null) return;
     const title = coverName.trim() || '歌曲歌詞合集';
+
+    const wordLang = (document.getElementById('word-lang') && document.getElementById('word-lang').value) || 'zh_tw';
+    const converter = getConverter(wordLang);
+    const cnv = (t) => converter ? converter(String(t)) : String(t);
+    const docFont = wordLang === 'zh_cn' ? 'Microsoft YaHei' : 'Microsoft JhengHei';
 
     document.getElementById('loading-overlay').style.display = 'flex';
 
@@ -428,18 +448,18 @@ async function generateWord() {
             new TextRun({ text: '♪', size: 72, color: '6c63ff' }),
         ]}));
         children.push(new Paragraph({ spacing: { before: 500 }, alignment: AlignmentType.CENTER, children: [
-            new TextRun({ text: title, bold: true, size: 50, color: '333333' }),
+            new TextRun({ text: cnv(title), bold: true, size: 50, color: '333333' }),
         ]}));
         children.push(new Paragraph({ spacing: { before: 300 }, alignment: AlignmentType.CENTER, children: [
             new TextRun({ text: 'Lyrics Collection', size: 28, color: '888888', italics: true }),
         ]}));
         children.push(new Paragraph({ spacing: { before: 1000 }, alignment: AlignmentType.CENTER, children: [
-            new TextRun({ text: `共收錄 ${songs.length} 首歌曲`, size: 24, color: '666666' }),
+            new TextRun({ text: cnv(`共收錄 ${songs.length} 首歌曲`), size: 24, color: '666666' }),
         ]}));
 
         children.push(new Paragraph({ children: [new PageBreak()] }));
         children.push(new Paragraph({ spacing: { after: 400 }, alignment: AlignmentType.CENTER, children: [
-            new TextRun({ text: '目  錄', bold: true, size: 36, color: '333333' }),
+            new TextRun({ text: cnv('目  錄'), bold: true, size: 36, color: '333333' }),
         ]}));
 
         songs.forEach((song, i) => {
@@ -449,7 +469,7 @@ async function generateWord() {
                 children: [
                     new InternalHyperlink({
                         anchor: `song-${i}`,
-                        children: [new TextRun({ text: `${i + 1}. ${song.title} — ${song.artist}`, size: 22, color: '1a73e8', underline: { type: UnderlineType.SINGLE } })],
+                        children: [new TextRun({ text: cnv(`${i + 1}. ${song.title} — ${song.artist}`), size: 22, color: '1a73e8', underline: { type: UnderlineType.SINGLE } })],
                     }),
                     new TextRun({ children: [new TextRun({ text: '\t' })] }),
                     new TextRun({ text: `${2 + i}`, size: 22, color: '333333' }),
@@ -460,17 +480,17 @@ async function generateWord() {
         songs.forEach((song, i) => {
             children.push(new Paragraph({ children: [new PageBreak()] }));
             children.push(new Paragraph({ spacing: { before: 400 }, children: [
-                new Bookmark({ id: `song-${i}`, children: [new TextRun({ text: `${i + 1}. ${song.title}`, bold: true, size: 36, color: '1a1a2e' })] }),
+                new Bookmark({ id: `song-${i}`, children: [new TextRun({ text: cnv(`${i + 1}. ${song.title}`), bold: true, size: 36, color: '1a1a2e' })] }),
             ]}));
             children.push(new Paragraph({ spacing: { after: 300 }, children: [
-                new TextRun({ text: `歌手：${song.artist}`, size: 24, color: '555555' }),
+                new TextRun({ text: cnv(`歌手：${song.artist}`), size: 24, color: '555555' }),
             ]}));
 
             const lyricsClean = stripTimestamps(song.lyrics);
             if (!lyricsClean) {
                 children.push(new Paragraph({
                     spacing: { before: 100 },
-                    children: [new TextRun({ text: '（無歌詞）', size: 30, color: 'aaaaaa', italics: true })],
+                    children: [new TextRun({ text: cnv('（無歌詞）'), size: 30, color: 'aaaaaa', italics: true })],
                 }));
             }
             let prevEmpty = true;
@@ -481,14 +501,14 @@ async function generateWord() {
                 if (!clean) { prevEmpty = true; return; }
                 children.push(new Paragraph({
                     spacing: { before: prevEmpty ? 200 : 40, after: 0 },
-                    children: [new TextRun({ text: clean, size: 30, color: '444444' })],
+                    children: [new TextRun({ text: cnv(clean), size: 30, color: '444444' })],
                 }));
                 prevEmpty = false;
             });
 
             if (song.listenUrl) {
                 children.push(new Paragraph({ spacing: { before: 500 }, children: [
-                    new TextRun({ text: '▶ 聆聽歌曲：', size: 22, color: '666666', bold: true }),
+                    new TextRun({ text: cnv('▶ 聆聽歌曲：'), size: 22, color: '666666', bold: true }),
                     new ExternalHyperlink({
                         children: [new TextRun({ text: song.listenUrl, size: 20, color: '1a73e8', underline: { type: UnderlineType.SINGLE } })],
                         link: song.listenUrl,
@@ -496,19 +516,19 @@ async function generateWord() {
                 ]}));
             } else {
                 children.push(new Paragraph({ spacing: { before: 500 }, children: [
-                    new TextRun({ text: '（無法取得聆聽連結）', size: 20, color: 'aaaaaa', italics: true }),
+                    new TextRun({ text: cnv('（無法取得聆聽連結）'), size: 20, color: 'aaaaaa', italics: true }),
                 ]}));
             }
         });
 
         const blob = await Packer.toBlob(new Document({
-            title: title,
-            description: `共收錄 ${songs.length} 首歌曲`,
-            creator: '歌曲歌詞編譯器',
-            styles: { default: { document: { run: { font: 'Microsoft JhengHei', size: 22 }, paragraph: { spacing: { after: 120 } } } } },
+            title: cnv(title),
+            description: cnv(`共收錄 ${songs.length} 首歌曲`),
+            creator: cnv('歌曲歌詞編譯器'),
+            styles: { default: { document: { run: { font: docFont, size: 22 }, paragraph: { spacing: { after: 120 } } } } },
             sections: [{ children }],
         }));
-        saveAs(blob, `${title}_${new Date().toISOString().slice(0, 10)}.docx`);
+        saveAs(blob, `${cnv(title)}_${new Date().toISOString().slice(0, 10)}.docx`);
 
     } catch (err) {
         console.error(err);
