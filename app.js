@@ -135,14 +135,14 @@ async function fetchSongData(query) {
     let listenUrl = '';
     let source = 'netease';
 
-    try { lyrics = await getLyrics(songId); } catch (_) {}
+    try { lyrics = stripTimestamps(await getLyrics(songId)); } catch (_) {}
 
-    const clean = (lyrics || '').replace(/\[\d{2}:\d{2}(\.\d{2,3})?\]/g, '').trim();
+    const clean = (lyrics || '');
     if (!descriptionOk(clean, durationMin)) {
         try {
             const yt = await searchSongOnYouTube(query);
             if (yt.lyrics && yt.lyrics.length > 0) {
-                lyrics = yt.lyrics;
+                lyrics = stripTimestamps(yt.lyrics);
                 listenUrl = yt.youtubeUrl;
                 source = 'youtube';
             }
@@ -328,6 +328,10 @@ function toggleLyrics(id) {
 }
 
 // ---- Render ----
+function stripTimestamps(text) {
+    return (text || '').replace(/\[\d{1,2}:\d{2}(:\d{2})?(\.\d{1,3})?\]/g, '').replace(/\n{3,}/g, '\n\n').trim();
+}
+
 function renderSongs() {
     const list = document.getElementById('songs-list');
     const count = document.getElementById('song-count');
@@ -363,7 +367,7 @@ function renderSongs() {
                                 <span class="status-badge ${song.status === 'success' ? 'success' : song.status === 'error' ? 'error' : 'loading'}">${statusLabel}</span>
                             </div>
                             ${song.status === 'success' && song.lyrics ? `<span class="lyrics-toggle" data-toggle-id="${song.id}" onclick="toggleLyrics('${song.id}')">▼ 展開歌詞</span>` : ''}
-                            <div class="lyrics-content" data-lyrics-id="${song.id}">${escapeHtml(song.lyrics || '')}</div>
+                            <div class="lyrics-content" data-lyrics-id="${song.id}">${escapeHtml(stripTimestamps(song.lyrics))}</div>
                             ${listenLink}
                         </div>
                         <div class="song-actions">
@@ -462,11 +466,18 @@ async function generateWord() {
                 new TextRun({ text: `歌手：${song.artist}`, size: 24, color: '555555' }),
             ]}));
 
+            const lyricsClean = stripTimestamps(song.lyrics);
+            if (!lyricsClean) {
+                children.push(new Paragraph({
+                    spacing: { before: 100 },
+                    children: [new TextRun({ text: '（無歌詞）', size: 30, color: 'aaaaaa', italics: true })],
+                }));
+            }
             let prevEmpty = true;
-            (song.lyrics || '（無歌詞）').split('\n').forEach(line => {
+            lyricsClean.split('\n').forEach(line => {
                 const raw = line.trim();
                 if (!raw) { prevEmpty = true; return; }
-                const clean = raw.replace(/\[\d{2}:\d{2}(\.\d{2,3})?\]/g, '').trim();
+                const clean = raw;
                 if (!clean) { prevEmpty = true; return; }
                 children.push(new Paragraph({
                     spacing: { before: prevEmpty ? 200 : 40, after: 0 },
